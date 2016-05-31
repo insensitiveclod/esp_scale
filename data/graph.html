@@ -1,0 +1,55 @@
+ <!DOCTYPE HTML>
+  <html><head><script type="text/javascript">
+  	window.onload = function () {
+		var dps = [{x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0}, {x: 5, y: 0},{x: 6, y: 0}, {x: 7, y: 0}, {x: 8, y: 0}, {x: 9, y: 0},
+ {x: 10, y: 0}];
+
+  		var chart = new CanvasJS.Chart("chartContainer",{
+			title :{
+				text: "Fridge Contents"
+			},
+			axisX: {
+				title: "Minutes"
+			},
+			axisY: {
+				title: "Units"
+			},
+			data: [{
+				type: "line",
+				dataPoints : dps
+			}]
+		})
+
+		chart.render();
+		var xVal = dps.length + 1;
+		var yVal = 15;
+		var updateInterval = 60000;
+		var updateChart = function () {
+
+			$.ajax({
+			url: "/json",
+			type: 'json',
+			success: function (data) {
+				dps.push({x: xVal,y: data["y"]});
+				xVal++;
+
+				if (dps.length >  100 )
+				{
+					dps.shift();
+				}
+				chart.render();
+			}
+		});
+	};
+        updateChart();
+ 	setInterval(function(){updateChart()}, updateInterval);
+}
+</script>
+<script type="text/javascript" src="canvasjs.min.js"></script>
+<script src="jquery.min.js"></script>
+</head>"
+<BODY>
+<div id="chartContainer" style="height: 300px; width: 100%;">
+</div>
+</BODY>
+</HTML>

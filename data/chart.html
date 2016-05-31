@@ -1,0 +1,88 @@
+<!DOCCTYPE HTML>
+<html>
+<head>
+<script src="chart.min.js"></script>
+<script src="jquery.min.js"></script>
+</head>
+<body>
+<canvas id="myChart" width="400" height="100" style="width: 400px; height: 400px;"></canvas> 
+<script>
+var ctx = document.getElementById("myChart");
+var myData = {
+    type: 'line',
+    data: {
+	labels: [],
+        datasets: [{
+            label: '# of Beers',
+            data: [] 
+        }]
+    },
+    options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true
+                }
+            }]
+        }
+    }
+};
+var myChart = new Chart(ctx,myData,{animationSteps: 1});
+var yVal = 10;
+var items=120;
+document.write(myData.type);
+
+     var updateInterval = 60000;
+document.write(myChart.data.datasets[0].data.length);
+var updateChart = function () {
+
+              $.ajax({
+//                url: "bla.pl",
+                url: "/json",
+                type: 'json',
+                success: function (data) {
+               yVal = data["y"]}});
+
+
+ //  yVal = yVal +  Math.round(5 + Math.random() *(-5-5));
+   if (myChart.data.datasets[0].data.length > items) {
+     myChart.data.datasets[0].data.push(yVal);
+     if (myChart.data.labels.length%5 == 0) {
+       myChart.data.labels.push(myChart.data.labels.length);
+     } else {
+       myChart.data.labels.push("");
+     }
+     myChart.data.datasets[0].data.shift();
+     myChart.data.labels.shift();
+   } else {
+     myChart.data.datasets[0].data[myChart.data.datasets[0].data.length] = yVal;
+     if ( myChart.data.labels.length%5 == 0) {
+     myChart.data.labels[myChart.data.labels.length]=myChart.data.labels.length;
+     } else {
+     myChart.data.labels[myChart.data.labels.length]="";
+    }
+
+   }
+   myChart.update();
+   myChart.render(10,1);
+        
+    //  chart.render();         
+
+//              $.ajax({
+//                url: "http://bla.pl",
+        //      url: "http://192.168.4.121/json",
+  //               type: 'json',
+    //            success: function (data) {
+      //          dps.push({x: xVal,y: data["y"]});
+
+ //       xVal++;
+
+};
+var latestLabel=10;
+setInterval(function(){updateChart()}, updateInterval); 
+
+</script>
+</body>
+</html>
+
+
