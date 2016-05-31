@@ -97,7 +97,7 @@ void setup() {
   }
   Serial.println ("FS mounted!");
 
-  if (! readConfig("/config-xs4all.json")) {
+  if (! readConfig("/config-techinc.json")) {
     Serial.println("Config Read FAIL\nHALTING\n");
     while (1) {}
   } else {
