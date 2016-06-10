@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ArduinoJson.h>
+#include <string.h>
 #include "FS.h"
 #include "hx711.h"
 
@@ -12,7 +13,12 @@ os_timer_t myTimer;
 bool tickOccured;
 int lastTime;
 String JSON;
+String tempString;
 int lastMeasurement;
+int startMeasurement;
+int startCount;
+int stopMeasurement;
+int stopCount;
 
 Hx711 scale(D2,D1);
 ESP8266WebServer server(80);
@@ -85,6 +91,59 @@ void handleJSON(){
   server.send(200,"application/json",JSON);
 }
 
+void handleCONFIG() {
+  String message = "Handling config\n\n";
+  if (server.args() == 0) {
+    message += "Provide \"start\" with any value\n\n";
+    message += "or \"stop\" with amount of units changed\n\n";
+    message += "calibration will occur after \"stop\"\n\n";
+  } else if (server.argName(0) == "start") {
+      message += "start called\n\n";
+      tempString = server.arg(0);
+      startCount=tempString.toInt();
+      message += "start Count: ";
+      message += startCount;
+      message += "\n";
+      startMeasurement=scale.getValue();
+      message += "Absolute measurement value: ";
+      message += startMeasurement;
+  } else if (server.argName(0) == "stop") {
+      message += "stop called\n\n";
+      tempString=server.arg(0);
+      stopCount = tempString.toInt();
+      message += "stop count: ";
+      message += stopCount;
+      message += "\n";
+      message += "stored start count: ";
+      message += startCount;
+      message += "\n";
+      message += "Count difference: ";
+      message +=  abs(startCount-stopCount);
+      message += "\n";
+      stopMeasurement=scale.getValue();
+      message += "Absolute measurement value =";
+      message += stopMeasurement;
+      message += "\n";
+      message += "Difference between stop and start measurements: ";
+      message += abs(startMeasurement-stopMeasurement);
+      message += "\n";
+      message += "Measurement value per unit (abs):" ;
+      message += abs(startMeasurement-stopMeasurement)/abs(startCount-stopCount);
+      message += "\n";
+      message += "Calculated zero-point: \n";
+      message += stopMeasurement-(stopCount*(abs(startMeasurement-stopMeasurement)/abs(startCount-stopCount)));
+      scale.setScale(abs(startMeasurement-stopMeasurement)/abs(startCount-stopCount));
+      scale.setOffset(stopMeasurement-(stopCount*(abs(startMeasurement-stopMeasurement)/abs(startCount-stopCount))));
+  } else {
+      message += "Unrecognized parameter";
+  }
+
+  server.send (200, "text/plain", message);
+  
+}
+
+
+
 
 void setup() {
   Serial.begin(115200);
@@ -97,7 +156,7 @@ void setup() {
   }
   Serial.println ("FS mounted!");
 
-  if (! readConfig("/config-techinc.json")) {
+  if (! readConfig("/config-xs4all.json")) {
     Serial.println("Config Read FAIL\nHALTING\n");
     while (1) {}
   } else {
@@ -153,6 +212,7 @@ void setup() {
   os_timer_setfn(&myTimer, timerCallback, NULL);
   os_timer_arm(&myTimer, 5000, true);
   server.on("/json",handleJSON);
+  server.on("/config", handleCONFIG);
   server.serveStatic("/", SPIFFS, "/", "max-age=600");
   
   Serial.println("Setting  scale ratio");
